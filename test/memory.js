@@ -29,6 +29,7 @@ const run = (test) => describe(test.name, () => {
 
     beforeEach(async () => {
         db = test.createInstance()
+        await db.init()
     })
 
     afterEach(async () => {
@@ -104,6 +105,22 @@ const run = (test) => describe(test.name, () => {
         expect(db.getSync('a', 'b')).to.deep.equal({ })
 
         expect(db.getSync()).to.deep.equal({ a: { b: { } } })
+    })
+
+    it('chains the init function', async () => {
+        const other = new Memory()
+        expect(await other.init()).to.equal(other)
+    })
+
+    it('persists if needed', async () => {
+        if (test.name != 'persistent-memory') return
+
+        db.putSync('key', 'val')
+        expect(db.getSync('key')).to.equal('val')
+
+        const other = await new Memory(localFile).init()
+
+        expect(other.getSync('key')).to.equal('val')
     })
 })
 

@@ -9,23 +9,20 @@ const readFileAsync = util.promisify(fs.readFile)
 const writeFileAsync = util.promisify(fs.writeFile)
 
 export default class Memory {
-    constructor(path) {
-        this.path = path
-        this.data = { }
+    constructor(file) {
+        this._file = file
+        this._data = { }
     }
 
     async init() {
-        if (!this.path) return
+        if (!this._file) return this
 
-        await mkdirpAsync(fs.dirname(this.path))
+        await mkdirpAsync(path.dirname(this._file))
+        if (fs.existsSync(this._file)) {
+            this._data = JSON.parse(await readFileAsync(this._file)) || { }
+        }
 
-        try {
-            this.data = JSON.parse(await readFileAsync(this.path)) || { }
-            console.log('Initialized memory DB from', this.path)
-        }
-        catch (err) {
-            console.log('Starting memory DB from scratch')
-        }
+        return this
     }
 
     async put(...args) { return this.putSync(...args) }
@@ -42,14 +39,14 @@ export default class Memory {
 
         const path = args.slice(0, -1)
         const item = args[args.length - 1]
-        const result = _.setWith(this.data, path, item, Object)
+        const result = _.setWith(this._data, path, item, Object)
         this._save()
         return result
     }
 
     getSync(...path) {
-        if (!path.length) return this.data
-        return _.get(this.data, path)
+        if (!path.length) return this._data
+        return _.get(this._data, path)
     }
 
     delSync(...path) {
@@ -59,22 +56,22 @@ export default class Memory {
     }
 
     _delWithin(...path) {
-        if (!_.has(this.data, path)) return false
+        if (!_.has(this._data, path)) return false
 
-        _.unset(this.data, path)
+        _.unset(this._data, path)
 
         const next = path.slice(0, -1)
 
         // If we've emptied the object at this path, clean up parents.
-        if (next.length && _.isEmpty(_.get(this.data, next))) {
+        if (next.length && _.isEmpty(_.get(this._data, next))) {
             this._delWithin(...next)
         }
         return true
     }
 
     _save() {
-        if (!this.path) return
-        return fs.writeFileSync(this.path, JSON.stringify(this.data))
+        if (!this._file) return
+        return fs.writeFileSync(this._file, JSON.stringify(this._data))
     }
 }
 
