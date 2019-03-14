@@ -1,6 +1,6 @@
 {
-  "name": "ellipsis-db",
-  "version": "0.0.0",
+  "name": "dotdb",
+  "version": "0.0.1",
   "description": "Simple abstraction of persistent hierarchical data",
   "main": "lib/index.js",
   "scripts": {

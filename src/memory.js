@@ -20,7 +20,7 @@ export default class Memory {
         await mkdirpAsync(fs.dirname(this.path))
 
         try {
-            this.data = JSON.parse(await readFileAsync(this.path))
+            this.data = JSON.parse(await readFileAsync(this.path)) || { }
             console.log('Initialized memory DB from', this.path)
         }
         catch (err) {
@@ -48,6 +48,7 @@ export default class Memory {
     }
 
     getSync(...path) {
+        if (!path.length) return this.data
         return _.get(this.data, path)
     }
 
@@ -73,7 +74,7 @@ export default class Memory {
 
     _save() {
         if (!this.path) return
-        return fs.writeFile(this.path, JSON.stringify(this.data))
+        return fs.writeFileSync(this.path, JSON.stringify(this.data))
     }
 }
 
